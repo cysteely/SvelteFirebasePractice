@@ -7,6 +7,7 @@
         error=false;
         if (!currTodo){
             error = true;
+            return;
         }
         todoList= [...todoList, currTodo];
         currTodo='';
@@ -145,7 +146,7 @@
         bottom: 0px;
         display: flex;
         align-items: stretch;
-        width: 90%;
+        width: 70%;
         border-radius: 5px;
         overflow: hidden;
     }

@@ -1,14 +1,22 @@
-<!-- <script>
-	import favicon from '$lib/assets/favicon.svg';
+<script>
+	import {onMount} from 'svelte'; //onpageload
+    import { auth, db } from "../lib/firebase/firebase";
 
-	let { children } = $props();
+	const nonAuthRoutes = ['/']
+
+	onMount(()=>{
+		console.log('Mounting');
+
+		const unsubscribe = auth.onAuthStateChanged(async user => {
+			const currentPath = window.location.pathname;
+
+			if (!user && !nonAuthRoutes.includes(currentPath)){ //if trying to access protected route 
+				window.location.href = '/';
+				return
+			}
+		});
+	});
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
-{@render children?.()} -->
 
 <div class="mainContainer">
 	<slot/>
