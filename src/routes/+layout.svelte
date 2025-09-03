@@ -1,6 +1,8 @@
 <script>
 	import {onMount} from 'svelte'; //onpageload
     import { auth, db } from "../lib/firebase/firebase";
+    import { getDoc, doc, setDoc } from 'firebase/firestore';
+	import { authStore } from '../store/store';
 
 	const nonAuthRoutes = ['/']
 
@@ -14,6 +16,44 @@
 				window.location.href = '/';
 				return
 			}
+
+			if (user && currentPath==='/'){
+				window.location.href = '/dashboard';
+				return
+			}
+
+			if(!user){
+				return;
+			}
+
+			let dataToSetToStore
+
+			const docRef = doc(db, 'users', user.uid);
+			const docSnap = await getDoc(docRef);
+
+			if(!docSnap.exists()){
+				const userRef = doc(db, 'user', user.uid);
+				dataToSetToStore = {
+					email: user.email, 
+					todos:[]
+				}
+				await setDoc(
+					userRef,
+					dataToSetToStore,
+					{merge: true} //merge existing with new - no overwriting 
+				);
+			}else{
+				const user_data = docSnap.data()
+				dataToSetToStore = user_data
+			}
+			authStore.update(curr => {
+				return{
+					...curr,
+					user,
+					dataToSetToStore,
+					loading: false //page loading finished
+				}
+			})
 		});
 	});
 </script>

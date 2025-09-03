@@ -12,7 +12,7 @@ export const authStore = writable ({ //default state
     data: {}
 })
 
-export const authHandles = {
+export const authHandlers = {
     signup: async (email, password) => {
         await createUserWithEmailAndPassword(auth, email, password)
     },
@@ -22,6 +22,5 @@ export const authHandles = {
     logout: async () => {
         await signOut(auth)
     }
-
 
 }
