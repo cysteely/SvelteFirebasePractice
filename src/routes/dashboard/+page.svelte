@@ -1,20 +1,31 @@
 <script>
-    let todoList = ["Do the groceries"];
-    let currTodo = '';
-    let error = true;
+    import { db } from "../../lib/firebase/firebase";
+    import { authHandlers, authStore } from "../../store/store";
+    import { getDoc, doc, setDoc } from "firebase/firestore";
+    import TodoItem from "../../components/TodoItem.svelte";
+
+
+    let todoList = [""];
+    let currTodo = "";
+    let error = false;
+    
+    authStore.subscribe((curr) => {
+        todoList = curr.data.todos;
+    });
 
     function addTodo() {
         error=false;
         if (!currTodo){
             error = true;
+            return;
         }
         todoList= [...todoList, currTodo];
-        currTodo='';
+        currTodo="";
     }
 
     function editTodo(index) {
-        let newTodoList = todoList.filter((val,i)=> {
-            return i!==index
+        let newTodoList = [...todoList].filter((val,i)=> {
+            return i!=index;
         });
         currTodo = todoList[index];
         todoList = newTodoList;
@@ -26,53 +37,54 @@
         });
         todoList = newTodoList;
     }
+
+    async function saveTodos() {
+        try {
+            const userRef = doc(db, "user", $authStore.user.uid);
+            await setDoc(
+                userRef,
+                {
+                    todos: todoList,
+                },
+                { merge: true }
+            );
+        } catch (err) {
+            console.log("There was an error saving your information");
+        }
+    }
 </script>
 
 
-<div class="mainContainer">
-    <div class="headerContainer">
-        <h1>Todo List</h1>
-        <div class="headerBtns">
-            <button>
-                <i class="fa-regular fa-floppy-disk"></i> <p>Save</p>
-            </button>
-            <button>
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> <p>Log Out</p>
-            </button>
+{#if !$authStore.loading }
+    <div class="mainContainer">
+        <div class="headerContainer">
+            <h1>Todo List</h1>
+            <div class="headerBtns">
+                <button on:click={saveTodos}>
+                    <i class="fa-regular fa-floppy-disk"></i>
+                    <p>Save</p>
+                </button>
+                <button on:click={authHandlers.logout}>
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <p>Log Out</p>
+                </button>
+            </div>
+        </div>
+        <main>
+            {#if todoList.length ===0}
+                <p>You have nothing to do!</p>
+            {/if}
+
+            {#each todoList as todo, index}
+                <TodoItem {todo} {index} {removeTodo} {editTodo} />
+            {/each}
+        </main>
+        <div class={"enterTodo " + (error ? "errorBorder" : "")}>
+            <input bind:value={currTodo} type="text" placeholder="Enter todo" />
+            <button on:click={addTodo}>ADD</button>
         </div>
     </div>
-    <main>
-        {#if todoList.length ===0}<p>You have nothing to do!</p>{/if}
-
-        {#each todoList as todo, index}
-            <div class="todo">
-                    <p>
-                        {index+1}. {todo}
-                    </p>
-                    <div class="actions">
-                        <i role="button" tabindex="0"
-                            on:click={()=> {
-                                editTodo(index);
-                            }}
-                            on:keydown={()=> {}}
-                            class="fa-solid fa-pen-to-square"
-                        ></i>
-                        <i role="button" tabindex="0"
-                            on:click={()=> {
-                                removeTodo(index);
-                            }}
-                            on:keydown={()=> {}}
-                            class="fa-solid fa-trash"
-                        ></i>
-                    </div>
-            </div>
-        {/each}
-    </main>
-    <div class={"enterTodo " + (error ? "errorBorder" : "")}>
-        <input bind:value={currTodo} type="text" placeholder="Enter todo" />
-        <button on:click={addTodo}>ADD</button>
-    </div>
-</div>
+{/if}
 
 <style>
     .mainContainer {
@@ -132,20 +144,12 @@
     }
 
 
-    .actions i {
-        cursor: pointer
-    }
-
-    .actions i:hover {
-        color: coral;
-    }
-
     .enterTodo {
         position: absolute;
         bottom: 0px;
         display: flex;
         align-items: stretch;
-        width: 90%;
+        width: 70%;
         border-radius: 5px;
         overflow: hidden;
     }
