@@ -26,13 +26,13 @@
 				return;
 			}
 
-			let dataToSetToStore
+			let dataToSetToStore;
 
 			const docRef = doc(db, 'users', user.uid);
 			const docSnap = await getDoc(docRef);
 
 			if(!docSnap.exists()){
-				const userRef = doc(db, 'user', user.uid);
+				const userRef = doc(db, 'users', user.uid);
 				dataToSetToStore = {
 					email: user.email, 
 					todos:[]
@@ -46,15 +46,16 @@
 				const user_data = docSnap.data()
 				dataToSetToStore = user_data
 			}
-			authStore.update(curr => {
+			authStore.update((curr) => {
 				return{
 					...curr,
 					user,
-					dataToSetToStore,
+					data: dataToSetToStore,
 					loading: false //page loading finished
-				}
-			})
+				};
+			});
 		});
+		return unsubscribe;
 	});
 </script>
 
